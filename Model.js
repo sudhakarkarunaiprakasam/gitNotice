@@ -22,11 +22,13 @@ function changedFilesText(count) {
   return count + " " + pluralize(count, "file") + " changed"
 }
 
-// Bar pill text: a red dot + count when repos are dirty, a quiet check
-// otherwise (also shown when no repos are tracked yet, so the widget stays
-// clickable to add some).
+// Bar pill: a git-branch glyph plus the dirty count. Color (grey when clean,
+// green when dirty) is applied by the caller via `dirtyColor`.
+var dirtyColor = "#3fb950"
+
 function pillText(dirtyCount) {
-  return dirtyCount > 0 ? ("\uD83D\uDD34 " + dirtyCount) : "\u2713"
+  var icon = "\uf126" // nf-fa-code_branch
+  return dirtyCount > 0 ? (icon + " " + dirtyCount) : icon
 }
 
 function dirtyRepos(repos) {

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Ui
@@ -62,193 +63,219 @@ Panel {
     contentWidth: card.fittedContentWidth(Style.space(320))
     contentHeight: card.fittedContentHeight(content.implicitHeight, Style.space(480))
 
-    ColumnLayout {
-      id: content
-      width: card.contentWidth
-      spacing: Style.space(10)
-
-      Text {
-        Layout.fillWidth: true
-        text: "GitNotice"
-        color: root.contentForeground
-        font.family: root.contentFontFamily
-        font.pixelSize: Style.font.h1
-      }
-
-      Text {
-        visible: root.lastError !== ""
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: root.lastError
-        color: Color.urgent
-        font.family: root.contentFontFamily
-        font.pixelSize: Style.font.bodySmall
-      }
-
-      PanelSectionHeader {
-        Layout.fillWidth: true
-        text: "UNCOMMITTED REPOS"
-        foreground: root.contentForeground
-        fontFamily: root.contentFontFamily
-      }
-
-      Text {
-        visible: root.uncommittedRepos.length === 0
-        Layout.fillWidth: true
-        text: root.refreshing ? "Checking repos…" : "All tracked repos are clean."
-        color: Qt.darker(root.contentForeground, 1.4)
-        font.family: root.contentFontFamily
-        font.pixelSize: Style.font.bodySmall
-      }
+    Flickable {
+      id: panelFlick
+      anchors.fill: parent
+      contentWidth: width
+      contentHeight: content.implicitHeight
+      clip: true
+      boundsBehavior: Flickable.StopAtBounds
+      flickableDirection: Flickable.VerticalFlick
+      interactive: contentHeight > height
+      ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
       ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Style.space(6)
+        id: content
+        width: panelFlick.width
+        spacing: Style.space(10)
 
-        Repeater {
-          model: root.uncommittedRepos
+        RowLayout {
+          Layout.fillWidth: true
 
-          ColumnLayout {
-            id: repoRow
-            required property var modelData
+          Text {
             Layout.fillWidth: true
-            spacing: Style.space(4)
+            text: "GitNotice"
+            color: root.contentForeground
+            font.family: root.contentFontFamily
+            font.pixelSize: Style.font.h1
+          }
 
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: Style.space(8)
-
-              ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-
-                Text {
-                  Layout.fillWidth: true
-                  text: repoRow.modelData.name
-                  elide: Text.ElideMiddle
-                  color: root.contentForeground
-                  font.family: root.contentFontFamily
-                  font.pixelSize: Style.font.body
-                }
-
-                Text {
-                  Layout.fillWidth: true
-                  text: Model.changedFilesText(repoRow.modelData.changedFiles)
-                  color: Qt.darker(root.contentForeground, 1.4)
-                  font.family: root.contentFontFamily
-                  font.pixelSize: Style.font.caption
-                }
-              }
-
-              Button {
-                text: root.activeCommitPath === repoRow.modelData.path ? "Cancel" : "Commit"
-                bordered: true
-                enabled: !root.busy
-                onClicked: root.beginCommit(repoRow.modelData.path)
-              }
-            }
-
-            RowLayout {
-              visible: root.activeCommitPath === repoRow.modelData.path
-              Layout.fillWidth: true
-              spacing: Style.space(6)
-
-              TextField {
-                Layout.fillWidth: true
-                placeholderText: "Commit message"
-                text: root.commitMessage
-                enabled: !root.busy
-                onTextChanged: root.commitMessage = text
-                onAccepted: root.submitCommit()
-              }
-
-              Button {
-                text: "Push"
-                bordered: true
-                enabled: !root.busy && root.commitMessage.trim() !== ""
-                onClicked: root.submitCommit()
-              }
-            }
+          Button {
+            text: "Refresh"
+            bordered: true
+            enabled: !root.busy && !root.refreshing
+            onClicked: if (root.hostWidget) root.hostWidget.refresh()
           }
         }
-      }
 
-      PanelSeparator {
-        Layout.fillWidth: true
-        foreground: root.contentForeground
-      }
-
-      RowLayout {
-        Layout.fillWidth: true
+        Text {
+          visible: root.lastError !== ""
+          Layout.fillWidth: true
+          wrapMode: Text.WordWrap
+          text: root.lastError
+          color: Color.urgent
+          font.family: root.contentFontFamily
+          font.pixelSize: Style.font.bodySmall
+        }
 
         PanelSectionHeader {
           Layout.fillWidth: true
-          text: "MANAGE REPOS (" + root.repos.length + ")"
+          text: "UNCOMMITTED REPOS"
           foreground: root.contentForeground
           fontFamily: root.contentFontFamily
         }
 
-        Button {
-          text: root.manageOpen ? "Hide" : "Show"
-          bordered: true
-          onClicked: root.manageOpen = !root.manageOpen
+        Text {
+          visible: root.uncommittedRepos.length === 0
+          Layout.fillWidth: true
+          text: root.refreshing ? "Checking repos…" : "All tracked repos are clean."
+          color: Qt.darker(root.contentForeground, 1.4)
+          font.family: root.contentFontFamily
+          font.pixelSize: Style.font.bodySmall
         }
-      }
 
-      ColumnLayout {
-        visible: root.manageOpen
-        Layout.fillWidth: true
-        spacing: Style.space(6)
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: Style.space(6)
 
-        Repeater {
-          model: root.repos
+          Repeater {
+            model: root.uncommittedRepos
 
-          RowLayout {
-            id: manageRow
-            required property var modelData
-            Layout.fillWidth: true
-            spacing: Style.space(8)
-
-            Text {
+            ColumnLayout {
+              id: repoRow
+              required property var modelData
               Layout.fillWidth: true
-              text: manageRow.modelData.name + (manageRow.modelData.error ? " — " + manageRow.modelData.error : "")
-              elide: Text.ElideMiddle
-              color: manageRow.modelData.error ? Color.urgent : root.contentForeground
-              font.family: root.contentFontFamily
-              font.pixelSize: Style.font.bodySmall
-            }
+              spacing: Style.space(4)
 
-            Button {
-              text: "Remove"
-              bordered: true
-              enabled: !root.busy
-              onClicked: root.hostWidget && root.hostWidget.removeRepo(manageRow.modelData.path)
+              RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.space(8)
+
+                ColumnLayout {
+                  Layout.fillWidth: true
+                  spacing: 0
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: repoRow.modelData.name
+                    elide: Text.ElideMiddle
+                    color: root.contentForeground
+                    font.family: root.contentFontFamily
+                    font.pixelSize: Style.font.body
+                  }
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: Model.changedFilesText(repoRow.modelData.changedFiles)
+                    color: Qt.darker(root.contentForeground, 1.4)
+                    font.family: root.contentFontFamily
+                    font.pixelSize: Style.font.caption
+                  }
+                }
+
+                Button {
+                  text: root.activeCommitPath === repoRow.modelData.path ? "Cancel" : "Commit"
+                  bordered: true
+                  enabled: !root.busy
+                  onClicked: root.beginCommit(repoRow.modelData.path)
+                }
+              }
+
+              RowLayout {
+                visible: root.activeCommitPath === repoRow.modelData.path
+                Layout.fillWidth: true
+                spacing: Style.space(6)
+
+                TextField {
+                  Layout.fillWidth: true
+                  placeholderText: "Commit message"
+                  text: root.commitMessage
+                  enabled: !root.busy
+                  selectByMouse: true
+                  onTextChanged: root.commitMessage = text
+                  onAccepted: root.submitCommit()
+                }
+
+                Button {
+                  text: "Push"
+                  bordered: true
+                  enabled: !root.busy && root.commitMessage.trim() !== ""
+                  onClicked: root.submitCommit()
+                }
+              }
             }
           }
+        }
+
+        PanelSeparator {
+          Layout.fillWidth: true
+          foreground: root.contentForeground
         }
 
         RowLayout {
           Layout.fillWidth: true
-          spacing: Style.space(6)
 
-          TextField {
+          PanelSectionHeader {
             Layout.fillWidth: true
-            placeholderText: "/path/to/repo"
-            text: root.newRepoPath
-            enabled: !root.busy
-            onTextChanged: root.newRepoPath = text
-            onAccepted: root.submitAddRepo()
+            text: "MANAGE REPOS (" + root.repos.length + ")"
+            foreground: root.contentForeground
+            fontFamily: root.contentFontFamily
           }
 
           Button {
-            text: "Add"
+            text: root.manageOpen ? "Hide" : "Show"
             bordered: true
-            enabled: !root.busy && root.newRepoPath.trim() !== ""
-            onClicked: root.submitAddRepo()
+            onClicked: root.manageOpen = !root.manageOpen
+          }
+        }
+
+        ColumnLayout {
+          visible: root.manageOpen
+          Layout.fillWidth: true
+          spacing: Style.space(6)
+
+          Repeater {
+            model: root.repos
+
+            RowLayout {
+              id: manageRow
+              required property var modelData
+              Layout.fillWidth: true
+              spacing: Style.space(8)
+
+              Text {
+                Layout.fillWidth: true
+                text: manageRow.modelData.name + (manageRow.modelData.error ? " — " + manageRow.modelData.error : "")
+                elide: Text.ElideMiddle
+                color: manageRow.modelData.error ? Color.urgent : root.contentForeground
+                font.family: root.contentFontFamily
+                font.pixelSize: Style.font.bodySmall
+              }
+
+              Button {
+                text: "Remove"
+                bordered: true
+                enabled: !root.busy
+                onClicked: root.hostWidget && root.hostWidget.removeRepo(manageRow.modelData.path)
+              }
+            }
+          }
+
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.space(6)
+
+            TextField {
+              Layout.fillWidth: true
+              placeholderText: "/path/to/repo"
+              text: root.newRepoPath
+              enabled: !root.busy
+              selectByMouse: true
+              onTextChanged: root.newRepoPath = text
+              onAccepted: root.submitAddRepo()
+            }
+
+            Button {
+              text: "Add"
+              bordered: true
+              enabled: !root.busy && root.newRepoPath.trim() !== ""
+              onClicked: root.submitAddRepo()
+            }
           }
         }
       }
     }
   }
 }
+
 

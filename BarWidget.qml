@@ -171,8 +171,7 @@ BarWidget {
     id: label
     anchors.centerIn: parent
     text: Model.pillText(root.dirtyCount)
-    opacity: root.dirtyCount > 0 ? 1.0 : 0.6
-    color: root.bar ? root.bar.barForeground : Color.foreground
+    color: root.dirtyCount > 0 ? Model.dirtyColor : Qt.darker(root.bar ? root.bar.barForeground : Color.foreground, 1.6)
     font.family: root.bar ? root.bar.fontFamily : Style.font.family
     font.pixelSize: Style.font.body
   }
