@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "sudhakar.gitnotice",
+  "name": "GitNotice",
+  "version": "0.1.0",
+  "author": "sudhakar",
+  "description": "Your Local Git Changes in One Glance",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "GitNotice",
+    "description": "Your Local Git Changes in One Glance",
+    "category": "Productivity",
+    "allowMultiple": false,
+    "defaultSection": "center",
+    "defaults": {
+      "refreshIntervalSec": 120
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 15,
+        "max": 3600,
+        "step": 5,
+        "defaultValue": 120
+      }
+    ]
+  }
+}
