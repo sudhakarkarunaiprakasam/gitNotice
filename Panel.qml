@@ -87,7 +87,7 @@ Panel {
             text: "GitNotice"
             color: root.contentForeground
             font.family: root.contentFontFamily
-            font.pixelSize: Style.font.h1
+            font.pixelSize: Style.font.heading
           }
 
           Button {
@@ -101,7 +101,7 @@ Panel {
         Text {
           visible: root.lastError !== ""
           Layout.fillWidth: true
-          wrapMode: Text.WordWrap
+          wrapMode: Text.Wrap
           text: root.lastError
           color: Color.urgent
           font.family: root.contentFontFamily
@@ -172,16 +172,20 @@ Panel {
               }
 
               RowLayout {
+                id: commitRow
                 visible: root.activeCommitPath === repoRow.modelData.path
                 Layout.fillWidth: true
                 spacing: Style.space(6)
+                onVisibleChanged: if (visible) Qt.callLater(commitField.forceActiveFocus)
 
                 TextField {
+                  id: commitField
                   Layout.fillWidth: true
                   placeholderText: "Commit message"
                   text: root.commitMessage
                   enabled: !root.busy
                   selectByMouse: true
+                  activeFocusOnPress: true
                   onTextChanged: root.commitMessage = text
                   onAccepted: root.submitCommit()
                 }
@@ -220,9 +224,11 @@ Panel {
         }
 
         ColumnLayout {
+          id: manageSection
           visible: root.manageOpen
           Layout.fillWidth: true
           spacing: Style.space(6)
+          onVisibleChanged: if (visible) Qt.callLater(newRepoField.forceActiveFocus)
 
           Repeater {
             model: root.repos
@@ -252,15 +258,18 @@ Panel {
           }
 
           RowLayout {
+            id: addRepoRow
             Layout.fillWidth: true
             spacing: Style.space(6)
 
             TextField {
+              id: newRepoField
               Layout.fillWidth: true
               placeholderText: "/path/to/repo"
               text: root.newRepoPath
               enabled: !root.busy
               selectByMouse: true
+              activeFocusOnPress: true
               onTextChanged: root.newRepoPath = text
               onAccepted: root.submitAddRepo()
             }
