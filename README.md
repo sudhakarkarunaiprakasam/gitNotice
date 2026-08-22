@@ -4,9 +4,9 @@ An Omarchy 4 bar-widget plugin. Add the local paths of your git repos (your
 notes vault, side projects, etc.) and GitNotice watches them for uncommitted
 changes.
 
-- A git-branch icon sits in the bar. It's greyed out when every tracked repo
-  is clean, and turns green with a count (N) when N repos have uncommitted
-  changes.
+- A git-branch glyph sits in the bar. It uses the bar's foreground colour at
+  reduced opacity when every tracked repo is clean, and uses the active bar
+  accent colour with a count (N) when N repos have uncommitted changes.
 - Click the icon to open the panel: it lists only the dirty repos with how
   many files changed in each, plus a manual **Refresh** button next to the
   heading if you don't want to wait for the periodic check.
@@ -27,7 +27,9 @@ directly. Requires `bash`, `git`, and `jq` — all ship with Omarchy by default.
 
 `BarWidget.qml` re-runs `gitnotice.sh list` on a timer (default every 120s,
 configurable via the widget's settings) and also on demand — via the panel's
-Refresh button or the `sudhakar.gitnotice refresh` IPC call.
+Refresh button or the `sudhakar.gitnotice refresh` IPC call. The bar glyph
+colour follows the current bar theme: clean uses the bar foreground with 60%
+opacity, while dirty uses the active accent colour.
 
 ## Install
 > omarchy plugin add https://github.com/sudhakarkarunaiprakasam/gitNotice --enable
