@@ -17,6 +17,10 @@ changes.
 - The panel content scrolls (instead of overflowing) once the repo list gets
   long.
 
+## Screenshot
+
+![GitNotice panel showing repository status and management controls](gitNotice_Panel_UI.png)
+
 ## How it works
 
 All the git plumbing lives in [`gitnotice.sh`](gitnotice.sh), a small bash +
