@@ -31,6 +31,32 @@ Panel {
   readonly property color contentForeground: bar ? bar.foreground : Color.foreground
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
 
+  // Uniform width for the small action buttons so "Commit"/"Cancel",
+  // "Push"/"Add"/"Remove" etc. don't visibly vary in size.
+  readonly property real actionButtonWidth: 96
+
+  component FixedActionButton: Item {
+    id: fixedButton
+
+    property alias text: button.text
+    property alias bordered: button.bordered
+    property alias enabled: button.enabled
+    signal clicked()
+
+    width: root.actionButtonWidth
+    implicitWidth: root.actionButtonWidth
+    implicitHeight: button.implicitHeight
+    Layout.minimumWidth: root.actionButtonWidth
+    Layout.preferredWidth: root.actionButtonWidth
+    Layout.maximumWidth: root.actionButtonWidth
+
+    Button {
+      id: button
+      anchors.fill: parent
+      onClicked: fixedButton.clicked()
+    }
+  }
+
   function beginCommit(path) {
     activeCommitPath = activeCommitPath === path ? "" : path
     commitMessage = ""
@@ -51,15 +77,16 @@ Panel {
 
   onOpenedChanged: if (opened && hostWidget) hostWidget.refresh()
 
-  // PopupCard is the actual layer-shell surface; the base Panel only tracks
-  // open/close state, so nothing renders on screen without this.
-  PopupCard {
+  // KeyboardPanel provides compositor-level keyboard focus for text inputs;
+  // PopupWindow only receives keyboard input after pointer focus changes.
+  KeyboardPanel {
     id: card
     anchorItem: root.anchorItem
     bar: root.bar
     owner: root.hostWidget || root
     open: root.opened
     centerOnBar: true
+    focusTarget: content
     contentWidth: card.fittedContentWidth(Style.space(320))
     contentHeight: card.fittedContentHeight(content.implicitHeight, Style.space(480))
 
@@ -77,6 +104,7 @@ Panel {
       ColumnLayout {
         id: content
         width: panelFlick.width
+        focus: true
         spacing: Style.space(10)
 
         RowLayout {
@@ -87,10 +115,10 @@ Panel {
             text: "GitNotice"
             color: root.contentForeground
             font.family: root.contentFontFamily
-            font.pixelSize: Style.font.heading
+            font.pixelSize: Style.font.body
           }
 
-          Button {
+          FixedActionButton {
             text: "Refresh"
             bordered: true
             enabled: !root.busy && !root.refreshing
@@ -113,6 +141,7 @@ Panel {
           text: "UNCOMMITTED REPOS"
           foreground: root.contentForeground
           fontFamily: root.contentFontFamily
+          fontSize: Style.font.caption
         }
 
         Text {
@@ -151,7 +180,8 @@ Panel {
                     elide: Text.ElideMiddle
                     color: root.contentForeground
                     font.family: root.contentFontFamily
-                    font.pixelSize: Style.font.body
+                    font.pixelSize: Style.font.subtitle
+                    font.bold: true
                   }
 
                   Text {
@@ -163,7 +193,7 @@ Panel {
                   }
                 }
 
-                Button {
+                FixedActionButton {
                   text: root.activeCommitPath === repoRow.modelData.path ? "Cancel" : "Commit"
                   bordered: true
                   enabled: !root.busy
@@ -184,13 +214,20 @@ Panel {
                   placeholderText: "Commit message"
                   text: root.commitMessage
                   enabled: !root.busy
+                  focus: visible
                   selectByMouse: true
                   activeFocusOnPress: true
                   onTextChanged: root.commitMessage = text
                   onAccepted: root.submitCommit()
+                  onActiveFocusChanged: if (root.hostWidget) root.hostWidget.suspendAutoRefresh = activeFocus
+                  Component.onCompleted: if (visible) Qt.callLater(forceActiveFocus)
+                  TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    onTapped: commitField.forceActiveFocus()
+                  }
                 }
 
-                Button {
+                FixedActionButton {
                   text: "Push"
                   bordered: true
                   enabled: !root.busy && root.commitMessage.trim() !== ""
@@ -214,9 +251,10 @@ Panel {
             text: "MANAGE REPOS (" + root.repos.length + ")"
             foreground: root.contentForeground
             fontFamily: root.contentFontFamily
+            fontSize: Style.font.caption
           }
 
-          Button {
+          FixedActionButton {
             text: root.manageOpen ? "Hide" : "Show"
             bordered: true
             onClicked: root.manageOpen = !root.manageOpen
@@ -245,10 +283,11 @@ Panel {
                 elide: Text.ElideMiddle
                 color: manageRow.modelData.error ? Color.urgent : root.contentForeground
                 font.family: root.contentFontFamily
-                font.pixelSize: Style.font.bodySmall
+                font.pixelSize: Style.font.subtitle
+                font.bold: true
               }
 
-              Button {
+              FixedActionButton {
                 text: "Remove"
                 bordered: true
                 enabled: !root.busy
@@ -268,13 +307,20 @@ Panel {
               placeholderText: "/path/to/repo"
               text: root.newRepoPath
               enabled: !root.busy
+              focus: visible
               selectByMouse: true
               activeFocusOnPress: true
               onTextChanged: root.newRepoPath = text
               onAccepted: root.submitAddRepo()
+              onActiveFocusChanged: if (root.hostWidget) root.hostWidget.suspendAutoRefresh = activeFocus
+              Component.onCompleted: if (visible) Qt.callLater(forceActiveFocus)
+              TapHandler {
+                acceptedButtons: Qt.LeftButton
+                onTapped: newRepoField.forceActiveFocus()
+              }
             }
 
-            Button {
+            FixedActionButton {
               text: "Add"
               bordered: true
               enabled: !root.busy && root.newRepoPath.trim() !== ""

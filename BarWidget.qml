@@ -22,6 +22,13 @@ BarWidget {
   property bool refreshing: false
   property bool busy: false
   property string lastError: ""
+  readonly property color dirtyColor: Border.hyprlandActiveSpec(Color.accent, 0).color
+
+  // Set by Panel.qml while a text field is being edited, so the periodic
+  // auto-refresh below doesn't replace `repos` (which rebuilds the
+  // Repeater delegates and kills focus/in-progress text) out from under
+  // the user. This was the root cause of the "unreliable" text field.
+  property bool suspendAutoRefresh: false
 
   function refresh() {
     if (listProcess.running) return
@@ -37,7 +44,11 @@ BarWidget {
       lastError = (parsed && parsed.error) || "Failed to read repo status"
       return
     }
-    repos = parsed.repos || []
+    var next = parsed.repos || []
+    // Skip the assignment when nothing actually changed so the Repeater
+    // delegates (and any focused input inside them) aren't torn down and
+    // recreated on every routine refresh.
+    if (JSON.stringify(next) !== JSON.stringify(repos)) repos = next
     lastError = ""
   }
 
@@ -120,7 +131,7 @@ BarWidget {
     running: true
     repeat: true
     triggeredOnStart: false
-    onTriggered: root.refresh()
+    onTriggered: if (!root.suspendAutoRefresh) root.refresh()
   }
 
   Loader {
@@ -172,7 +183,7 @@ BarWidget {
     anchors.centerIn: parent
     text: Model.pillText(root.dirtyCount)
     opacity: root.dirtyCount > 0 ? 1.0 : 0.6
-    color: root.bar ? root.bar.barForeground : Color.foreground
+    color: root.dirtyCount > 0 ? root.dirtyColor : (root.bar ? root.bar.barForeground : Color.foreground)
     font.family: root.bar ? root.bar.fontFamily : Style.font.family
     font.pixelSize: Style.font.body
   }
