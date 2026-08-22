@@ -30,12 +30,7 @@ configurable via the widget's settings) and also on demand — via the panel's
 Refresh button or the `sudhakar.gitnotice refresh` IPC call.
 
 ## Install
+> omarchy plugin add https://github.com/sudhakarkarunaiprakasam/gitNotice --enable
 
-Copy (or symlink) this repo to:
-
-```
-~/.config/omarchy/plugins/sudhakar.gitnotice/
-```
-
-Then enable "GitNotice" from Omarchy's bar widget settings.
-
+## Uninstall
+> omarchy plugin remove https://github.com/sudhakarkarunaiprakasam/gitNotice
