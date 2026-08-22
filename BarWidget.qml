@@ -15,6 +15,8 @@ BarWidget {
   readonly property string homeDir: Quickshell.env("HOME")
   readonly property string helperPath: Model.helperPath(homeDir)
   readonly property int refreshIntervalSec: Math.max(15, parseInt(setting("refreshIntervalSec", 120)) || 120)
+  readonly property int maxOutputBytes: 65536
+  readonly property int ipcRefreshCooldownMs: 5000
 
   property var repos: []
   readonly property var uncommittedRepos: Model.dirtyRepos(repos)
@@ -22,7 +24,12 @@ BarWidget {
   property bool refreshing: false
   property bool busy: false
   property string lastError: ""
+  property double lastIpcRefreshMs: 0
   readonly property color dirtyColor: Border.hyprlandActiveSpec(Color.accent, 0).color
+
+  function boundedCommand(args) {
+    return ["bash", "-c", "helper=\"$1\"; shift; \"$helper\" \"$@\" 2>&1 | head -c " + root.maxOutputBytes, "gitnotice", helperPath].concat(args)
+  }
 
   // Set by Panel.qml while a text field is being edited, so the periodic
   // auto-refresh below doesn't replace `repos` (which rebuilds the
@@ -33,8 +40,15 @@ BarWidget {
   function refresh() {
     if (listProcess.running) return
     refreshing = true
-    listProcess.command = [helperPath, "list"]
+    listProcess.command = boundedCommand(["list"])
     listProcess.running = true
+  }
+
+  function refreshFromIpc() {
+    var now = Date.now()
+    if (lastIpcRefreshMs > 0 && now - lastIpcRefreshMs < ipcRefreshCooldownMs) return
+    lastIpcRefreshMs = now
+    refresh()
   }
 
   function applyList(raw) {
@@ -55,21 +69,21 @@ BarWidget {
   function addRepo(path) {
     if (busy || !path) return
     busy = true
-    actionProcess.command = [helperPath, "add", path]
+    actionProcess.command = boundedCommand(["add", path])
     actionProcess.running = true
   }
 
   function removeRepo(path) {
     if (busy || !path) return
     busy = true
-    actionProcess.command = [helperPath, "remove", path]
+    actionProcess.command = boundedCommand(["remove", path])
     actionProcess.running = true
   }
 
   function commitAndPush(path, message) {
     if (busy || !path || !message) return
     busy = true
-    actionProcess.command = [helperPath, "commit", path, message]
+    actionProcess.command = boundedCommand(["commit", path, message])
     actionProcess.running = true
   }
 
@@ -170,7 +184,7 @@ BarWidget {
   IpcHandler {
     target: "sudhakar.gitnotice"
 
-    function refresh(): void { root.refresh() }
+    function refresh(): void { root.refreshFromIpc() }
     function open(): void { root.open() }
     function close(): void { root.close() }
     function show(): void { root.open() }

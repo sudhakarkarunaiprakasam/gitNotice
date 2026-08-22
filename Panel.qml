@@ -130,6 +130,7 @@ Panel {
           visible: root.lastError !== ""
           Layout.fillWidth: true
           wrapMode: Text.Wrap
+          textFormat: Text.PlainText
           text: root.lastError
           color: Color.urgent
           font.family: root.contentFontFamily
@@ -176,6 +177,7 @@ Panel {
 
                   Text {
                     Layout.fillWidth: true
+                    textFormat: Text.PlainText
                     text: repoRow.modelData.name
                     elide: Text.ElideMiddle
                     color: root.contentForeground
@@ -212,6 +214,7 @@ Panel {
                   id: commitField
                   Layout.fillWidth: true
                   placeholderText: "Commit message"
+                  maximumLength: 4096
                   text: root.commitMessage
                   enabled: !root.busy
                   focus: visible
@@ -279,6 +282,7 @@ Panel {
 
               Text {
                 Layout.fillWidth: true
+                textFormat: Text.PlainText
                 text: manageRow.modelData.name + (manageRow.modelData.error ? " — " + manageRow.modelData.error : "")
                 elide: Text.ElideMiddle
                 color: manageRow.modelData.error ? Color.urgent : root.contentForeground
@@ -305,6 +309,7 @@ Panel {
               id: newRepoField
               Layout.fillWidth: true
               placeholderText: "/path/to/repo"
+              maximumLength: 4096
               text: root.newRepoPath
               enabled: !root.busy
               focus: visible
